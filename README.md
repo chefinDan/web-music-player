@@ -12,7 +12,7 @@ There are three main sections to this web application.
 2. The Express base file server: Each song will be a json object with appropriate fields, and a source url that points to a the mongodb.
 3. Mongo database: node.js needs to interface with the database.
 
+Much of the interface/UX can be done with handlebars. Which we haven't learned yet. The MongoDB stuff will be covered last week of class, but it's actually pretty simple,. youtube has a ton of tutorials. 
 
-I will post any useful articles or resources I find below this comment line
-     <!--************************** resources and help -*****************************->
-https://medium.com/@richard534/uploading-streaming-audio-using-nodejs-express-mongodb-gridfs-b031a0bcb20f
+For now be thinking creatively and researching methods to implement basic features of a media player. I fully expect to encounter problems that force us to simplify our application.  
+
