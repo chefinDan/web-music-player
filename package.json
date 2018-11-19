@@ -1,24 +1,30 @@
 {
-  "name": "final-project-bitswizzlin",
+  "name": "final-project-godspeed",
   "version": "1.0.0",
   "description": "CS290 Final Project - web application ",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "handlebars views/partials/trackTemplate.handlebars -f public/trackTemplate.js",
+    "prestart": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OSU-CS290-F18/final-project-bitswizzlin.git"
+    "url": "git+https://github.com/OSU-CS290-F18/final-project-godspeed.git"
   },
-  "author": "Daniel Green",
+  "author": "Daniel Green, Jake Speer, Ashley",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/OSU-CS290-F18/final-project-bitswizzlin/issues"
+    "url": "https://github.com/OSU-CS290-F18/final-project-godspeed/issues"
   },
-  "homepage": "https://github.com/OSU-CS290-F18/final-project-bitswizzlin#readme",
+  "homepage": "https://github.com/OSU-CS290-F18/final-project-godspeed#readme",
   "dependencies": {
-    "express": "^4.16.4"
+    "express": "^4.16.4",
+    "express-handlebars": "^3.0.0",
+    "handlebars": "*",
+    "id3-parser": "^2.0.0",
+    "recursive-readdir": "^2.2.2"
   },
   "devDependencies": {
     "nodemon": "^1.18.6"
