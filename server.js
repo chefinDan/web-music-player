@@ -13,7 +13,15 @@ var PORT = process.env.PORT || 8000;
 app.engine('handlebars', exphbs());
 app.set('view engine', 'handlebars');
 
+
+const contentDir = path.join(__dirname, '../', 'Music/mp3');
 app.use(express.static('public'));
+app.use('/public/music/mp3', express.static(contentDir));
+
+//route method for root, used for testing
+app.get('/', function (req, res, next) {
+    res.render('listTemplate', {"data": trackdata} );
+});
 
 
 
@@ -22,14 +30,19 @@ app.use(express.static('public'));
 //  array trackdata[]
 
 // To use on our own computer, make a directory of only mp3's,
-// put mp3 directory in public directory and assign path to 'var contentDir' below
-var contentDir = "public/testContent";
-var trackdata = [];
+// assign path to 'const contentDir' above
 
+var trackdata = [];
 fs.readdir(contentDir, (err, files) => {
   files.forEach( elem => {
     fs.readFile(path.join(contentDir, elem), (err, buf) => {
       var tags = ID3.parse(buf);
+      if(!tags.image) {
+        tags.image = {
+          "data": "null",
+          "mime": "null"
+        };
+      }
       trackdata.push({"title": tags.title,
                       "artist": tags.artist,
                       "album": tags.album,
@@ -48,8 +61,9 @@ fs.readdir(contentDir, (err, files) => {
 
 
 //route method for img artwork, uses :album param and virtual paths!!
+// The imgs are stored as base64 data in the trackdata object array,
+// because of this a route method is used instead of serving static files.
 app.get('/public/img/:album', (req, res, next) => {
-  console.log(req.params.track);
   for(var i = 0; i < trackdata.length; i++) {
     if(trackdata[i].album.includes(req.params.album)) {
       res.contentType('image/'+ trackdata[i].cover.mime);
@@ -57,25 +71,16 @@ app.get('/public/img/:album', (req, res, next) => {
       i = trackdata.length;
     }
   }
+  if(!res.headersSent) {
+    // console.log('res.headerSent: ', res.headersSent);
+    next();
+  }
 });
 
-app.get('/public/testContent/:track', (req, res, err) => {
-  console.log(req.params.track);
-  for(var i = 0; i < trackdata.length; i++) {
-    if(trackdata[i].url.includes(req.params.track)) {
-      res.contentType('audio/mpeg');
-      res.send(trackdata[i].url);
-      i = trackdata.length;
-    }
-  }
+//catches all instances where there is no album artwork
+app.get('/public/img/*', (req, res, next) => {
+  res.sendFile(path.join(__dirname, 'public/default-artwork.png'));
 })
-
-//route method for root, used for testing
-app.get('/', function (req, res, next) {
-    res.render('listTemplate', {"data": trackdata} );
-  });
-
-
 
 
 
