@@ -1,0 +1,12 @@
+<main class="home-page">
+  <div class="title-container">
+    <h2>This website allows you to play, sort, and upload lyrics for songs stored on your computer.</h2>
+    </div>
+    <div id = "library-content">
+
+        {{#each tracks}}
+          {{> trackTemplate}}
+        {{/each}}
+
+  </div>
+</main>
