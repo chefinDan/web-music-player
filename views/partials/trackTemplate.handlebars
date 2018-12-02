@@ -1,21 +1,29 @@
 <section class="track-item">
-  <div id="track-info-container">
-    <div id="track-name">{{title}}</div>
 
-    <div id="artist-name">{{artist}}</div>
+<ul>
+  <li>
+    <div id="track" data-title="title" data-artist="artist" data-album="album" data-year="year" data-genre="genre">
+      <ul>
+        <li id="track-name">{{title}}</li>
 
-    <div id="album-name">{{{album}}}</div>
+        <li id="artist-name">{{artist}}</li>
 
-    <div id="album-year">{{year}}</div>
+        <li id="album-name">{{album}}</li>
 
-    <div id="album-genre">{{genre}}</div>
-  </div>
-  <div id="cover-art-container">
-    <img src="/public/img/{{album}}" alt="{{album}} + cover art">
-  </div>
-  <div id="audio-player-container">
-    <audio id="player" controls>
-      <source src="/public/music/mp3/{{url}}" type="audio/mpeg">
-    </audio>
-  </div>
+        <li id="album-year">{{year}}</li>
+
+        <li id="album-genre">{{genre}}</li>
+      <ul>
+    </div>
+    <div id="cover-art-container">
+      <img src="/public/img/{{album}}" alt="{{album}} + cover art">
+    </div>
+    <div id="audio-player-container">
+      <audio id="player" controls>
+        <source src="{{url}}" type="audio/mpeg">
+      </audio>
+    </div>
+  </li>
+</ul>
+
 </section>
