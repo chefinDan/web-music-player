@@ -1,24 +1,127 @@
-//server js goes here
-// Use nodejs, express, mongodb
-var path = require('path');
-var express = require('express');
-var app = express();
-var exphbs = require('express-handlebars');
-var Handlebars = require('handlebars');
+/*
+* nodeJS module dependencies
+*/
+const path = require('path');
 const fs = require('fs');
+const bodyParser = require('body-parser');
+const { readable } = require('stream');
+/*
+* NPM Module Dependies
+*/
+const exphbs = require('express-handlebars');
+const express = require('express');
+const Handlebars = require('handlebars');
 const ID3 = require('id3-parser');
-var bodyParser = require('body-parser');
+const trackRoute = express.Router();
+const multer = require('multer');
+const mongodb = require('mongodb');
+const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
+const app = express();
 
-var PORT = process.env.PORT || 8000;
-
+/*
+*  Express declarations
+*/
 app.engine('handlebars', exphbs({ defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
+app.use('/tracks', trackRoute);
 app.use(express.static('public'));
-
 app.use(bodyParser.json());
 
+/*
+* Global variables
+*/
+var mongoHost = process.env.MONGO_HOST || 'classmongo.engr.oregonstate.edu';
+var mongoPort = process.env.MONGO_PORT || 27017;
+var mongoUser = process.env.MONGO_USER || 'cs290_greendan';
+var mongoPassword = process.env.MONGO_PASSWORD;
+var mongoDBName = process.env.MONGO_DB_NAME || 'cs290_greendan';
+var PORT = process.env.PORT || 8000;
 var contentDir;
 var trackdata = [];
+var mongoDBDatabase;
+var mongoURL = 'mongodb://' + mongoUser + ':' + mongoPassword + '@' +
+                mongoHost + ':' + mongoPort + '/' + mongoDBName;
+
+mongodb://<username>:<password>@<hostName>:<port>/<database>
+
+console.log(process.env.MONGO_PASSWORD);
+
+
+
+MongoClient.connect(mongoURL, (err, client) => {
+  if (err) {
+    console.log('MongoDB Connection Error. Please make sure that MongoDB is running.');
+    console.log(err);
+    process.exit(1);
+  }
+  db = mongoDBDatabase = client.db(mongoDBName);
+});
+
+
+trackRoute.get('/:trackID', (req, res) => {
+  try {
+    var trackID = new ObjectID(req.params.trackID);
+  } catch(err) {
+    return res.status(400).json({ message: "Invalid trackID in URL param." });
+  }
+  res.set('content-type', 'audio/mp3');
+  res.set('accept-ranges', 'bytes');
+
+  var bucket = new mongodb.GridFSBucket(db, {
+    bucketName: 'tracks'
+  });
+
+  var downloadStream = bucket.openDownloadStream(trackID);
+
+  downloadStream.on('data', (chunk) => {
+    res.write(chunk);
+  });
+
+  downloadStream.on('error', () => {
+    res.sendStatus(404);
+  });
+
+  downloadStream.on('end', () => {
+    res.end();
+  });
+});
+
+trackRoute.post('/', (req, res) => {
+  const storage = multer.memoryStorage()
+  const upload = multer({ storage: storage, limits: { fields: 1, fileSize: 6000000, files: 1, parts: 2 }});
+  upload.single('track')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: "Upload Request Validation Failed" });
+    } else if(!req.body.name) {
+      return res.status(400).json({ message: "No track name in request body" });
+    }
+
+    var trackName = req.body.name;
+
+    // Covert buffer to Readable Stream
+    const readableTrackStream = new Readable();
+    readableTrackStream.push(req.file.buffer);
+    readableTrackStream.push(null);
+
+    let bucket = new mongodb.GridFSBucket(db, {
+      bucketName: 'tracks'
+    });
+
+    let uploadStream = bucket.openUploadStream(trackName);
+    let id = uploadStream.id;
+    readableTrackStream.pipe(uploadStream);
+
+    uploadStream.on('error', () => {
+      return res.status(500).json({ message: "Error uploading file" });
+    });
+
+    uploadStream.on('finish', () => {
+      return res.status(201).json({ message: "File uploaded successfully, stored under Mongo ObjectID: " + id });
+    });
+  });
+});
+
 
 app.get('/', (req, res, next) => {
   if(!contentDir) {
@@ -95,7 +198,7 @@ function parseTrackData() {
 
 
 
-//route method for img artwork, uses :album param and virtual paths!!
+// route method for img artwork, uses :album param and virtual paths!!
 // The imgs are stored as base64 data in the trackdata object array,
 // because of this a route method is used instead of serving static files.
 app.get('/public/img/:album', (req, res, next) => {
