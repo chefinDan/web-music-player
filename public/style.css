@@ -1,6 +1,6 @@
 .track-item {
   display: inline-block;
-  height: 250px;
+  height: auto;
   width: 100%;
 }
 #track-info-container {

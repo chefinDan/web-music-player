@@ -65,6 +65,7 @@ app.get('/', (req, res, next) => {
 });
 
 app.get('/library', (req, res, next) => {
+
     res.status(200).render('library', libData);
 });
 
@@ -80,6 +81,7 @@ app.get('/tracks/:trackID', (req, res) => {
   } catch(err) {
     return res.status(400).json({ message: "Invalid trackID in URL param." });
   }
+  
   res.set('content-type', 'audio/mp3');
   res.set('accept-ranges', 'bytes');
 
