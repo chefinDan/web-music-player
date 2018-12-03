@@ -1,12 +1,29 @@
 <main class="home-page">
-  <div class="title-container">
-    <h2>This website allows you to play, sort, and upload lyrics for songs stored on your computer.</h2>
-    </div>
     <div id = "library-content">
 
-        {{#each tracks}}
-          {{> trackTemplate}}
+<!-- passed the libData objcect -->
+<!-- ex:                          -->
+<!-- {
+        Pink Floyd: {
+          Dark Side of the Moon: {
+            tracks: [song 1, song 2, song 3...]
+          }
+        }
+          Earl Sweatshirt: {
+            Some Rap Songs: {
+              tracks: [song 1, song 2, song 3...]
+          }
+        }
+
+      } -->
+
+      {{#each this}}
+        {{#each this}}
+          {{#each tracks}}
+            {{> trackTemplate}}
+          {{/each}}
         {{/each}}
+      {{/each}}
 
   </div>
 </main>

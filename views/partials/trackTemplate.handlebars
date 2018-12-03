@@ -2,7 +2,7 @@
 
 <ul>
   <li>
-    <div id="track" data-title="title" data-artist="artist" data-album="album" data-year="year" data-genre="genre">
+    <div id={{track}} data-title={{title}} data-artist={{artist}} data-album={{album}} data-year={{year}} data-genre={{genre}}>
       <ul>
         <li id="track-name">{{title}}</li>
 
@@ -16,11 +16,11 @@
       <ul>
     </div>
     <div id="cover-art-container">
-      <img src="/public/img/{{album}}" alt="{{album}} + cover art">
+      <img src="/{{artist}}/{{album}}/{{id}}" alt="{{album}} + cover art">
     </div>
     <div id="audio-player-container">
       <audio id="player" controls>
-        <source src="{{url}}" type="audio/mpeg">
+        <source src="/tracks/{{id}}" type="audio/mp3">
       </audio>
     </div>
   </li>

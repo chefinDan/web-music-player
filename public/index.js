@@ -2,37 +2,37 @@
 // alert('Client Side js loaded');
 
 function handleFileUpload() {
+  //get the File object from <input>
+  console.log('here');
+  var file = document.querySelector('#file-input').files[0];
 
-  var filePath = document.getElementById('file-input').value;
-
-  if (!filePath.includes('/')) {
-    alert("Enter a valid path!");
+  // Only accpet mp3 files
+  if (!file.name.includes('.mp3')) {
+    alert("This application only accepts mp3 files");
   } else {
+    // create FormData object from scratch
+    var formData = new FormData();
+    // give it two key:value pairs, name and track(File object)
+    formData.append('name', file.name);
+    formData.append('track', file);
+
+    console.log('in handleFileUpload');
+
+    // create XMLHttpRequest Object and set method to POST and url to root
     var postRequest = new XMLHttpRequest();
-    postRequest.open('POST', '/songs/upload');
-
-    var requestBody = JSON.stringify({
-      path: filePath,
-    });
-
-    postRequest.setRequestHeader('Content-Type', 'application/json');
-    postRequest.send(requestBody);
-
-    postRequest.onreadystatechange=(e)=>{
-      if(postRequest.readyState == 4) {
-        console.log('ready');
-        var getRequest = new XMLHttpRequest();
-        // var requestURL = '/library';
-        getRequest.open('GET', '/library');
-        getRequest.send();
-      }
-      else {
-        console.log('not ready');
+    postRequest.open('POST', '/', true);
+    // when request is fully loaded report the status
+    postRequest.onload = (event) => {
+      if (postRequest.status == 200 || 201) {
+        console.log("Uploaded!");
+        hideModal();
+      } else {
+      console.log("Error " + postRequest.status + " occurred when trying to upload your file.");
       }
     }
-    hideModal();
+    console.log('about to send formdata');
+    postRequest.send(formData);
   }
-
 }
 
 

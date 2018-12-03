@@ -4,7 +4,7 @@
 const path = require('path');
 const fs = require('fs');
 const bodyParser = require('body-parser');
-const { readable } = require('stream');
+const { Readable } = require('stream');
 /*
 * NPM Module Dependies
 */
@@ -13,10 +13,11 @@ const express = require('express');
 const Handlebars = require('handlebars');
 const ID3 = require('id3-parser');
 const trackRoute = express.Router();
-const multer = require('multer');
+const multer = require('multer'); // for handling large form-data
 const mongodb = require('mongodb');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
+const FileReader = require('filereader');
 const app = express();
 
 /*
@@ -34,18 +35,14 @@ app.use(bodyParser.json());
 var mongoHost = process.env.MONGO_HOST || 'classmongo.engr.oregonstate.edu';
 var mongoPort = process.env.MONGO_PORT || 27017;
 var mongoUser = process.env.MONGO_USER || 'cs290_greendan';
-var mongoPassword = process.env.MONGO_PASSWORD;
+var mongoPassword = process.env.MONGO_PASSWORD || 'ATIRadeon9!'
 var mongoDBName = process.env.MONGO_DB_NAME || 'cs290_greendan';
 var PORT = process.env.PORT || 8000;
 var contentDir;
-var trackdata = [];
+var libData = {}; //store mongoDB id and tag data on server
 var mongoDBDatabase;
 var mongoURL = 'mongodb://' + mongoUser + ':' + mongoPassword + '@' +
                 mongoHost + ':' + mongoPort + '/' + mongoDBName;
-
-mongodb://<username>:<password>@<hostName>:<port>/<database>
-
-console.log(process.env.MONGO_PASSWORD);
 
 
 
@@ -56,10 +53,28 @@ MongoClient.connect(mongoURL, (err, client) => {
     process.exit(1);
   }
   db = mongoDBDatabase = client.db(mongoDBName);
+  app.listen(PORT, err => {
+    if(err) throw err;
+    console.log(' === server listening on port ', PORT);
+  });
+});
+
+app.get('/', (req, res, next) => {
+    res.status(200).render('library');
+      // res.status(200).render('library', {tracks: libData});
+});
+
+app.get('/library', (req, res, next) => {
+    res.status(200).render('library', libData);
+});
+
+app.get('/uploadFiles', (req, res, next) => {
+    res.status(200).render('uploadFiles');
 });
 
 
-trackRoute.get('/:trackID', (req, res) => {
+app.get('/tracks/:trackID', (req, res) => {
+  console.log('get song');
   try {
     var trackID = new ObjectID(req.params.trackID);
   } catch(err) {
@@ -87,9 +102,10 @@ trackRoute.get('/:trackID', (req, res) => {
   });
 });
 
-trackRoute.post('/', (req, res) => {
+
+app.post('/', (req, res) => {
   const storage = multer.memoryStorage()
-  const upload = multer({ storage: storage, limits: { fields: 1, fileSize: 6000000, files: 1, parts: 2 }});
+  const upload = multer({ storage: storage, limits: { fields: 1, fileSize: 60000000, files: 1, parts: 2 }});
   upload.single('track')(req, res, (err) => {
     if (err) {
       return res.status(400).json({ message: "Upload Request Validation Failed" });
@@ -104,6 +120,7 @@ trackRoute.post('/', (req, res) => {
     readableTrackStream.push(req.file.buffer);
     readableTrackStream.push(null);
 
+
     let bucket = new mongodb.GridFSBucket(db, {
       bucketName: 'tracks'
     });
@@ -114,105 +131,82 @@ trackRoute.post('/', (req, res) => {
 
     uploadStream.on('error', () => {
       return res.status(500).json({ message: "Error uploading file" });
+      console.log("Error uploading file");
     });
 
     uploadStream.on('finish', () => {
+      console.log("File uploaded successfully, stored under Mongo ObjectID: " + id);
+      parseTrackData(req.file.buffer, id);
       return res.status(201).json({ message: "File uploaded successfully, stored under Mongo ObjectID: " + id });
     });
   });
 });
 
 
-app.get('/', (req, res, next) => {
-  if(!contentDir) {
-    res.status(200).render('uploadFiles');
-  }
-  else {}
-
-});
-
-app.get('/library', (req, res, next) => {
-  console.log('render landing page');
-  res.status(200).render('library', { tracks: trackdata });
-});
-
-app.post('/songs/upload', (req, res, next) => {
-  if(req.body && req.body.path) {
-    contentDir = req.body.path;
-    res.status(200).send("Success");
-    app.use(express.static(contentDir));
-    parseTrackData();
-  }
-  else {
-    res.status(400).send("Request needs a body with a path");
-  }
-});
 
 
-function parseTrackData() {
-  console.log(contentDir);
-    fs.readdir(contentDir, (err, files) => {
-      console.log(files);
-      files.forEach( elem => {
-        fs.readFile(path.join(contentDir, elem), (err, buf) => {
-          var tags = ID3.parse(buf);
-          // console.log(tags);
-          if(!tags.image) {
-            tags.image = {
-              "data": "null",
-              "mime": "null"
-            };
-          }
-          trackdata.push({"title": tags.title.trim(),
-                          "artist": tags.artist.trim(),
-                          "album": tags.album.trim(),
-                          "year": tags.year.trim(),
-                          "genre": tags.genre.trim(),
-                          "cover":
-                            {
-                              "img": Buffer.from(tags.image.data, 'base64'),
-                              "mime": tags.image.mime
-                            },
-                            "url": contentDir + elem
-          });
-          // fs.copyFile('source.txt', 'destination.txt', (err) => {
-          // if (err) throw err;
-          // console.log('source.txt was copied to destination.txt');
-          // });
-          console.log(trackdata);
-        });
-      });
-    });
-}
+//  This uses the ID3 module to parse the tag data from a buffer stream passed
+//  as file in the parameters. .
+//  ID3.parse returns an object, each object is pushed to an
+//  array libData[]
+function parseTrackData(file, id) {
+    var tags = ID3.parse(file);
+    if(!tags.image) {
+      tags.image = {
+        "data": "null",
+        "mime": "null"
+      };
+    }
+    var tagDataObject = {
+      "id": id,
+      "title": tags.title.trim(),
+      "artist": tags.artist.trim(),
+      "album": tags.album.trim(),
+      "year": tags.year.trim(),
+      "genre": tags.genre.trim(),
+      "cover":
+      {
+          "img": Buffer.from(tags.image.data, 'base64'),
+          "mime": tags.image.mime
+      }
+    };
 
-
-
-//  This uses the ID3 module using local files in /testContent.
-//  ID3.parse outputs returns an object, each object is pushed to an
-//  array trackdata[]
-
-// To use on our own computer, make a directory of only mp3's,
-// assign path to 'const contentDir' above
-
-
-
-
+    if(libData[tags.artist] && libData[tags.artist][tags.album]) {
+      libData[tags.artist][tags.album].tracks.push(tagDataObject);
+    }
+    else if(libData[tags.artist]) {
+      libData[tags.artist][tags.album] = {
+        tracks: []
+      }
+      libData[tags.artist][tags.album].tracks.push(tagDataObject);
+    }
+    else {
+      libData[tags.artist] = {
+        [tags.album]: {
+          tracks: []
+        }
+      };
+      libData[tags.artist][tags.album].tracks.push(tagDataObject);
+    }
+};
 
 // route method for img artwork, uses :album param and virtual paths!!
-// The imgs are stored as base64 data in the trackdata object array,
+// The imgs are stored as base64 data in the libData object array,
 // because of this a route method is used instead of serving static files.
-app.get('/public/img/:album', (req, res, next) => {
-  for(var i = 0; i < trackdata.length; i++) {
-    if(trackdata[i].album.includes(req.params.album)) {
-      res.contentType('image/'+ trackdata[i].cover.mime);
-      res.send(trackdata[i].cover.img);
-      i = trackdata.length;
+app.get('/:artist/:album/:trackID', (req, res, next) => {
+    var tracks = libData[req.params.artist][req.params.album].tracks;
+    for(var i in tracks) {
+      if(tracks[i].id == req.params.trackID) {
+        if(tracks[i].cover.mime == null) {
+          // console.log('no cover art');
+          next();
+        }
+        else {
+          res.contentType('image/jpeg');
+          res.send(tracks[i].cover.img);
+        }
+      }
     }
-  }
-  if(!res.headersSent) {
-    // console.log('res.headerSent: ', res.headersSent);
-    next();
-  }
 });
 
 
@@ -220,10 +214,3 @@ app.get('/public/img/:album', (req, res, next) => {
 app.get('/public/img/*', (req, res, next) => {
   res.sendFile(path.join(__dirname, 'public/default-artwork.png'));
 })
-
-
-
-app.listen(PORT, err => {
-  if(err) throw err;
-  console.log(' === server listening on port ', PORT);
-});
