@@ -161,7 +161,7 @@ function parseTrackData(file, id) {
       "id": id,
       "title": tags.title.trim(),
       "artist": tags.artist.trim(),
-      "album": tags.album.trim(),
+      "album": tags.album.replace(/\uFFFD/g, ''), //weird character keeps popping up
       "year": tags.year.trim(),
       "genre": tags.genre.trim(),
       "cover":
@@ -170,44 +170,47 @@ function parseTrackData(file, id) {
           "mime": tags.image.mime
       }
     };
+    console.log(tagDataObject);
 
     if(libData[tags.artist] && libData[tags.artist][tags.album] && libData[tags.artist][tags.album].tracks) {
+      // console.log('artist, album and tracks already in database');
       libData[tags.artist][tags.album].tracks.push(tagDataObject);
-      console.log('artist, album and tracks already in database');
     }
     else if(libData[tags.artist] && libData[tags.artist][tags.album]) {
       libData[tags.artist][tags.album] = {
         tracks: [tagDataObject]
       }
+      // console.log('artist, album already in database');
       libData[tags.artist][tags.album].tracks.push(tagDataObject);
-      console.log('artist, album already in database');
 
     }
     else if(libData[tags.artist]) {
       libData[tags.artist][tags.album] = {
         tracks: []
       }
+      // console.log('artist already in database');
       libData[tags.artist][tags.album].tracks.push(tagDataObject);
     }
     else {
       libData[tags.artist] = {
-        [tags.album]: {
+        [tags.album.replace("\u0000", "")]: {
           tracks: []
         }
       };
-      console.log(libData[tags.artist]);
-      libData[tags.artist][tags.album].tracks.push(tagDataObject);
+      // console.log('new to the database');
+      libData[tags.artist][tags.album.replace("\u0000", "")].tracks.push(tagDataObject);
+      console.log(libData);
     }
 };
 
-// route method for img artwork, uses :album param and virtual paths!!
+// route method for img artwork,
 // The imgs are stored as base64 data in the libData object array,
 // because of this a route method is used instead of serving static files.
 app.get('/:artist/:album/:trackID', (req, res, next) => {
-    var tracks = libData[req.params.artist][req.params.album].tracks;
-    for(var i in tracks) {
+    var tracks = libData[req.params.artist][req.params.album.replace(/\uFFFD/g, '')].tracks;
+    for(var i = 0; i < tracks.length;  i++) {
       if(tracks[i].id == req.params.trackID) {
-        if(tracks[i].cover.mime == null) {
+        if(tracks[i].cover.mime == 'null') {
           // console.log('no cover art');
           next();
         }
@@ -221,7 +224,7 @@ app.get('/:artist/:album/:trackID', (req, res, next) => {
 
 app.get('/*/*/*', (req, res, next) => {
   res.contentType('image/jpeg');
-  res.send('public/default-artwork');
+  res.sendFile(path.join(__dirname, 'public/default-artwork.png'));
 });
 
 app.get('*', (req, res) => {
