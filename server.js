@@ -35,7 +35,7 @@ app.use(bodyParser.json());
 var mongoHost = process.env.MONGO_HOST || 'classmongo.engr.oregonstate.edu';
 var mongoPort = process.env.MONGO_PORT || 27017;
 var mongoUser = process.env.MONGO_USER || 'cs290_greendan';
-var mongoPassword = process.env.MONGO_PASSWORD || 'ATIRadeon9!'
+var mongoPassword = process.env.MONGO_PASSWORD;
 var mongoDBName = process.env.MONGO_DB_NAME || 'cs290_greendan';
 var PORT = process.env.PORT || 8000;
 var contentDir;
@@ -171,8 +171,17 @@ function parseTrackData(file, id) {
       }
     };
 
-    if(libData[tags.artist] && libData[tags.artist][tags.album]) {
+    if(libData[tags.artist] && libData[tags.artist][tags.album] && libData[tags.artist][tags.album].tracks) {
       libData[tags.artist][tags.album].tracks.push(tagDataObject);
+      console.log('artist, album and tracks already in database');
+    }
+    else if(libData[tags.artist] && libData[tags.artist][tags.album]) {
+      libData[tags.artist][tags.album] = {
+        tracks: [tagDataObject]
+      }
+      libData[tags.artist][tags.album].tracks.push(tagDataObject);
+      console.log('artist, album already in database');
+
     }
     else if(libData[tags.artist]) {
       libData[tags.artist][tags.album] = {
@@ -186,6 +195,7 @@ function parseTrackData(file, id) {
           tracks: []
         }
       };
+      console.log(libData[tags.artist]);
       libData[tags.artist][tags.album].tracks.push(tagDataObject);
     }
 };
@@ -208,6 +218,16 @@ app.get('/:artist/:album/:trackID', (req, res, next) => {
       }
     }
 });
+
+app.get('/*/*/*', (req, res, next) => {
+  res.contentType('image/jpeg');
+  res.send('public/default-artwork');
+});
+
+app.get('*', (req, res) => {
+  // res.contentType('html/css');
+  res.status(404).render('404');
+})
 
 
 //catches all instances where there is no album artwork
