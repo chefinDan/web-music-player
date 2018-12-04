@@ -1,6 +1,17 @@
 //Client side js here
 // alert('Client Side js loaded');
 
+function updateSearch() {
+    var input = document.getElementById("filter-text").value.toLowerCase();
+    var libraryContent = document.getElementById("library-content");
+
+    var size = libraryContent.children.length;
+    alert(size);
+    for (var i = 0; i < size; i++) {
+        libraryContent.removeChild(libraryContent.firstElementChild);
+    }
+}
+
 function handleFileUpload() {
   //get the File object from <input>
   console.log('here');
@@ -25,6 +36,7 @@ function handleFileUpload() {
     postRequest.onload = (event) => {
       if (postRequest.status == 200 || 201) {
         console.log("Uploaded!");
+        window.location = "/library";
         hideModal();
       } else {
       console.log("Error " + postRequest.status + " occurred when trying to upload your file.");
@@ -86,7 +98,10 @@ function hideModal() {
  */
 window.addEventListener('DOMContentLoaded', function () {
 
-
+    var searchButton = document.getElementById('search-button');
+    if (searchButton) {
+        searchButton.addEventListener('click', updateSearch);
+    }
 
   var addPhotoButton = document.getElementById('add-photo-button');
   if (addPhotoButton) {

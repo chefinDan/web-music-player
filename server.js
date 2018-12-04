@@ -34,9 +34,9 @@ app.use(bodyParser.json());
 */
 var mongoHost = process.env.MONGO_HOST || 'classmongo.engr.oregonstate.edu';
 var mongoPort = process.env.MONGO_PORT || 27017;
-var mongoUser = process.env.MONGO_USER || 'cs290_greendan';
-var mongoPassword = process.env.MONGO_PASSWORD;
-var mongoDBName = process.env.MONGO_DB_NAME || 'cs290_greendan';
+var mongoUser = process.env.MONGO_USER || 'cs290_stachurr';
+var mongoPassword = process.env.MONGO_PASSWORD || 'DuckS361046';
+var mongoDBName = process.env.MONGO_DB_NAME || 'cs290_stachurr';
 var PORT = process.env.PORT || 8000;
 var contentDir;
 var libData = {}; //store mongoDB id and tag data on server
@@ -60,8 +60,8 @@ MongoClient.connect(mongoURL, (err, client) => {
 });
 
 app.get('/', (req, res, next) => {
-    res.status(200).render('library');
-      // res.status(200).render('library', {tracks: libData});
+    // next();
+    res.status(200).render('library', libData);
 });
 
 app.get('/library', (req, res, next) => {
@@ -81,7 +81,7 @@ app.get('/tracks/:trackID', (req, res) => {
   } catch(err) {
     return res.status(400).json({ message: "Invalid trackID in URL param." });
   }
-  
+
   res.set('content-type', 'audio/mp3');
   res.set('accept-ranges', 'bytes');
 
