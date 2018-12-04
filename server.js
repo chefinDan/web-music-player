@@ -60,8 +60,10 @@ MongoClient.connect(mongoURL, (err, client) => {
 });
 
 app.get('/', (req, res, next) => {
-    // next();
-    res.status(200).render('library', libData);
+    res.status(200).render('library', {
+        empty: true,
+        data: libData
+    });
 });
 
 app.get('/library', (req, res, next) => {

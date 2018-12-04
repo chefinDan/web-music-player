@@ -4,11 +4,21 @@
 function updateSearch() {
     var input = document.getElementById("filter-text").value.toLowerCase();
     var libraryContent = document.getElementById("library-content");
-
     var size = libraryContent.children.length;
-    alert(size);
+    var tracks = [];
+
+    //push all matching titles and remove all from DOM
     for (var i = 0; i < size; i++) {
+        if (libraryContent.firstElementChild.firstElementChild.firstElementChild.getAttribute("data-title").toLowerCase() == input) {
+            alert("Title match found!");
+            tracks.push(libraryContent.firstElementChild);
+        }
         libraryContent.removeChild(libraryContent.firstElementChild);
+    }
+
+    //add all matching tracks to DOM
+    for (var i = 0; i < tracks.length; i++) {
+        libraryContent.appendChild(tracks[i]);
     }
 }
 
