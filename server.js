@@ -189,11 +189,11 @@ function parseTrackData(file, id) {
 
     }
     else if(libData[tags.artist]) {
-      libData[tags.artist][tags.album] = {
+      libData[tags.artist][tags.album.replace(/\u0000/g, '')] = {
         tracks: []
       }
       // console.log('artist already in database');
-      libData[tags.artist][tags.album].tracks.push(tagDataObject);
+      libData[tags.artist][tags.album.replace(/\u0000/g, '')].tracks.push(tagDataObject);
     }
     else {
       libData[tags.artist] = {
