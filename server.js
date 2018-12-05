@@ -165,7 +165,7 @@ function parseTrackData(file, id) {
       "id": id,
       "title": tags.title.trim(),
       "artist": tags.artist.trim(),
-      "album": tags.album.replace(/\uFFFD/g, ''), //weird character keeps popping up
+      "album": tags.album.replace(/\u0000/g, ''), //weird character keeps popping up
       "year": tags.year.trim(),
       "genre": tags.genre.trim(),
       "cover":
@@ -197,12 +197,12 @@ function parseTrackData(file, id) {
     }
     else {
       libData[tags.artist] = {
-        [tags.album.replace("\u0000", "")]: {
+        [tags.album.replace(/\u0000/g, '')]: {
           tracks: []
         }
       };
       // console.log('new to the database');
-      libData[tags.artist][tags.album.replace("\u0000", "")].tracks.push(tagDataObject);
+      libData[tags.artist][tags.album.replace(/\u0000/g, '')].tracks.push(tagDataObject);
       console.log(libData);
     }
 };
@@ -211,12 +211,14 @@ function parseTrackData(file, id) {
 // The imgs are stored as base64 data in the libData object array,
 // because of this a route method is used instead of serving static files.
 app.get('/:artist/:album/:trackID', (req, res, next) => {
-    var tracks = libData[req.params.artist][req.params.album.replace(/\uFFFD/g, '')].tracks;
+    var tracks = libData[req.params.artist][req.params.album].tracks;
     for(var i = 0; i < tracks.length;  i++) {
       if(tracks[i].id == req.params.trackID) {
         if(tracks[i].cover.mime == 'null') {
           // console.log('no cover art');
-          next();
+          res.contentType('image/jpeg');
+          res.sendFile(path.join(__dirname, 'public/default-artwork.png'));
+          // next();
         }
         else {
           res.contentType('image/jpeg');
@@ -226,10 +228,10 @@ app.get('/:artist/:album/:trackID', (req, res, next) => {
     }
 });
 
-app.get('/*/*/*', (req, res, next) => {
-  res.contentType('image/jpeg');
-  res.sendFile(path.join(__dirname, 'public/default-artwork.png'));
-});
+// app.get('/*/*/*', (req, res, next) => {
+//   res.contentType('image/jpeg');
+//   res.sendFile(path.join(__dirname, 'public/default-artwork.png'));
+// });
 
 app.get('*', (req, res) => {
   // res.contentType('html/css');
@@ -238,6 +240,6 @@ app.get('*', (req, res) => {
 
 
 //catches all instances where there is no album artwork
-app.get('/public/img/*', (req, res, next) => {
-  res.sendFile(path.join(__dirname, 'public/default-artwork.png'));
-})
+// app.get('/public/img/*', (req, res, next) => {
+//   res.sendFile(path.join(__dirname, 'public/default-artwork.png'));
+// })

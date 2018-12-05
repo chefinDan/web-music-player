@@ -25,7 +25,7 @@ function updateSearch() {
                 //artist pass
                 if (track.getAttribute("data-album").toLowerCase() == album || album.length == 0) {
                     //album pass
-                    if (track.getAttribute("data-genre").toLowerCase() == genre || genre.length == 0) {
+                    if (track.getAttribute("data-genre").toLowerCase().includes(genre) || genre.length == 0) {
                         //genre pass
                         if (track.getAttribute("data-year") == year || year.length == 0) {
                             //year pass
