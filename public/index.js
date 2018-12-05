@@ -2,16 +2,39 @@
 // alert('Client Side js loaded');
 
 function updateSearch() {
-    var input = document.getElementById("filter-text").value.toLowerCase();
+    var album = document.getElementById("filter-album").value.toLowerCase();
+    var artist = document.getElementById("filter-artist").value.toLowerCase();
+    var genre = document.getElementById("filter-genre").value.toLowerCase();
+    var title = document.getElementById("filter-title").value.toLowerCase();
+    var year = document.getElementById("filter-year").value.toLowerCase();
+
     var libraryContent = document.getElementById("library-content");
     var size = libraryContent.children.length;
     var tracks = [];
 
-    //push all matching titles and remove all from DOM
     for (var i = 0; i < size; i++) {
-        if (libraryContent.firstElementChild.firstElementChild.firstElementChild.getAttribute("data-title").toLowerCase() == input) {
-            alert("Title match found!");
-            tracks.push(libraryContent.firstElementChild);
+        if (album.length == 0 && artist.length == 0 && genre.length == 0 && title.length == 0 && year.length == 0) {
+            alert("Please enter at least one field.");
+            break;
+        }
+
+        var track = libraryContent.firstElementChild.firstElementChild.firstElementChild;
+        if (track.getAttribute("data-title").toLowerCase() == title || title.length == 0) {
+            //title pass
+            if (track.getAttribute("data-artist").toLowerCase() == artist || artist.length == 0) {
+                //artist pass
+                if (track.getAttribute("data-album").toLowerCase() == album || album.length == 0) {
+                    //album pass
+                    if (track.getAttribute("data-genre").toLowerCase() == genre || genre.length == 0) {
+                        //genre pass
+                        if (track.getAttribute("data-year") == year || year.length == 0) {
+                            //year pass
+                            //all criteria met
+                            tracks.push(libraryContent.firstElementChild);
+                        }
+                    }
+                }
+            }
         }
         libraryContent.removeChild(libraryContent.firstElementChild);
     }
