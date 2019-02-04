@@ -1,8 +1,7 @@
-# final-project-godspeed
+# Dynamic web media player w/ mongoDB
 
 This web application allows the user to upload mp3 files and have them stored in a database. Data stored as ID3 tags in the mp3 file is used to populate the artist, album etc data fields.  
 As of right now, when the server is killed the files are gone. But the browser can be closed without losing any data.
-
 
 The core of this app is built around nodeJS, Express, MongoDB, GridFS and Multer.
 To use, clone the repo to your local host, and set the following environment variables
